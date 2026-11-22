@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: cuponlab
+      POSTGRES_PASSWORD: cuponlab
+      POSTGRES_DB: cuponlab
+    ports:
+      - "5432:5432"
+    volumes:
+      - cuponlab_db_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cuponlab -d cuponlab"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://cuponlab:cuponlab@db:5432/cuponlab
+      PORT: 3000
+    ports:
+      - "3000:3000"
+
+volumes:
+  cuponlab_db_data:
